@@ -8,7 +8,7 @@ import {
 // URL della tua funzione serverless che fa da proxy verso Duffel (vedi api/flights.js).
 // Sostituiscila con l'indirizzo del tuo deploy Vercel, es:
 // "https://il-tuo-progetto.vercel.app/api/flights"
-const DUFFEL_PROXY_URL = "https://IL-TUO-PROGETTO.vercel.app/api/flights";
+const DUFFEL_PROXY_URL = "https://creative-khapse-88438b.netlify.app/.netlify/functions/flights";
 
 const MONTHS = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
 const AIRLINES = ["ItaWays Air", "EuroSky", "BudgetJet", "SkyValue", "AirNomad", "BlueRoute"];
