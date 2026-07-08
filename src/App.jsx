@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import {
   Plane, Wallet, Calendar, Sparkles, ChevronDown, ChevronUp, Building2, Info, Minus, Plus,
   Search, ListFilter, Users, MapPin, Bookmark, BookmarkCheck, Share2, X, Globe2, TicketCheck,
@@ -303,19 +303,16 @@ function stopsLabel(offer) {
   return `${stops} scali`;
 }
 
-function TicketCard({ r, departureCode, nights, people, budget, month, saved, onToggleSave, onOpen }) {
+function TicketCard({ r, departureCode, nights, people, budget, month, saved, onToggleSave, onOpen, getLivePrice, ensureLivePrice, liveKeyFor }) {
   const monthLabel = MONTHS[r.month];
 
-  // Prezzo reale del volo per QUESTO biglietto, caricato appena la scheda appare.
-  const [live, setLive] = useState("loading"); // 'loading' | 'error' | 'empty' | { cheapest, offers }
+  // Prezzo reale del volo per QUESTO biglietto: legge/scrive la cache condivisa,
+  // così la scheda e il dettaglio mostrano sempre lo stesso numero (una sola richiesta a Duffel).
+  const key = liveKeyFor(departureCode, r.code, r.month, nights, people);
   useEffect(() => {
-    let cancelled = false;
-    setLive("loading");
-    fetchRealFlightPrice({ departureCode, code: r.code, month: r.month, nights, people })
-      .then((data) => { if (!cancelled) setLive(data.cheapest ? data : "empty"); })
-      .catch(() => { if (!cancelled) setLive("error"); });
-    return () => { cancelled = true; };
-  }, [r.code, r.month, departureCode, nights, people]);
+    ensureLivePrice(key, { departureCode, code: r.code, month: r.month, nights, people });
+  }, [key, ensureLivePrice, departureCode, r.code, r.month, nights, people]);
+  const live = getLivePrice(key) || "loading";
 
   const hasLivePrice = live && live !== "loading" && live !== "error" && live !== "empty" && live.cheapest;
   const liveIsEur = hasLivePrice && live.cheapest.currency === "EUR";
@@ -535,26 +532,45 @@ export default function Pulciaro() {
   const openModal = (r) => setModalTicket(buildSnapshot(r));
   const closeModal = () => setModalTicket(null);
 
-  // Prezzo reale del volo (Duffel), interrogato on-demand quando si apre il dettaglio
-  const [realFlight, setRealFlight] = useState(null); // null | 'loading' | 'error' | { cheapest, offers }
-
-  const loadRealFlight = useCallback(async (ticket) => {
-    setRealFlight("loading");
-    try {
-      const data = await fetchRealFlightPrice(ticket);
-      setRealFlight(data.cheapest ? data : "empty");
-    } catch (e) {
-      setRealFlight("error");
-    }
+  // Cache condivisa dei prezzi reali Duffel: una sola richiesta per ogni combinazione
+  // partenza/destinazione/mese/notti/persone, letta sia dalle schede in elenco che dal dettaglio.
+  const liveCacheRef = useRef({});
+  const [, bumpLiveTick] = useState(0);
+  const liveKeyFor = useCallback(
+    (departureCode, code, month, nights, people) => `${departureCode}_${code}_${month}_${nights}_${people}`,
+    []
+  );
+  const getLivePrice = useCallback((key) => liveCacheRef.current[key], []);
+  const ensureLivePrice = useCallback((key, params, force = false) => {
+    if (!force && liveCacheRef.current[key]) return; // già in cache o in corso
+    liveCacheRef.current[key] = "loading";
+    bumpLiveTick((n) => n + 1);
+    fetchRealFlightPrice(params)
+      .then((data) => { liveCacheRef.current[key] = data.cheapest ? data : "empty"; })
+      .catch(() => { liveCacheRef.current[key] = "error"; })
+      .finally(() => bumpLiveTick((n) => n + 1));
   }, []);
 
+  const modalLiveKey = modalTicket
+    ? liveKeyFor(modalTicket.departureCode, modalTicket.code, modalTicket.month, modalTicket.nights, modalTicket.people)
+    : null;
   useEffect(() => {
-    if (modalTicket) {
-      loadRealFlight(modalTicket);
-    } else {
-      setRealFlight(null);
+    if (modalTicket && modalLiveKey) {
+      ensureLivePrice(modalLiveKey, {
+        departureCode: modalTicket.departureCode, code: modalTicket.code,
+        month: modalTicket.month, nights: modalTicket.nights, people: modalTicket.people,
+      });
     }
-  }, [modalTicket, loadRealFlight]);
+  }, [modalTicket, modalLiveKey, ensureLivePrice]);
+  const refreshModalPrice = () => {
+    if (modalTicket && modalLiveKey) {
+      ensureLivePrice(modalLiveKey, {
+        departureCode: modalTicket.departureCode, code: modalTicket.code,
+        month: modalTicket.month, nights: modalTicket.nights, people: modalTicket.people,
+      }, true);
+    }
+  };
+  const realFlight = modalLiveKey ? getLivePrice(modalLiveKey) : null;
 
   const modalHasLivePrice = realFlight && realFlight !== "loading" && realFlight !== "error" && realFlight !== "empty" && realFlight.cheapest;
   const modalLiveIsEur = modalHasLivePrice && realFlight.cheapest.currency === "EUR";
@@ -941,6 +957,7 @@ export default function Pulciaro() {
               key={r.code} r={r} departureCode={departure.code} nights={nights} people={people}
               budget={budget} month={month} saved={isSaved(ticketId(r, departure.code, r.month, nights, people))}
               onToggleSave={(res) => toggleSave(buildSnapshot(res))} onOpen={openModal}
+              getLivePrice={getLivePrice} ensureLivePrice={ensureLivePrice} liveKeyFor={liveKeyFor}
             />
           ))}
         </div>
@@ -991,6 +1008,7 @@ export default function Pulciaro() {
                           key={r.code} r={r} departureCode={departure.code} nights={nights} people={people}
                           budget={budget} month={month} saved={isSaved(ticketId(r, departure.code, r.month, nights, people))}
                           onToggleSave={(res) => toggleSave(buildSnapshot(res))} onOpen={openModal}
+                          getLivePrice={getLivePrice} ensureLivePrice={ensureLivePrice} liveKeyFor={liveKeyFor}
                         />
                       ))}
                     </div>
@@ -1070,7 +1088,7 @@ export default function Pulciaro() {
                     Prezzo reale del volo (Duffel)
                   </span>
                   <button
-                    onClick={() => loadRealFlight(modalTicket)}
+                    onClick={refreshModalPrice}
                     aria-label="Aggiorna prezzo reale"
                     style={{ background: "transparent", border: "none", cursor: "pointer", padding: 2, display: "flex" }}
                   >
