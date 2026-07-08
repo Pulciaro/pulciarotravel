@@ -447,28 +447,36 @@ function toISODate(d) {
 }
 
 // Interroga la funzione serverless (api/flights.js) che a sua volta interroga Duffel.
-async function fetchRealFlightPrice(ticket) {
+async function fetchRealFlightPrice(ticket, timeoutMs = 12000) {
   const departureDate = nextDateForMonth(ticket.month);
   const returnDate = new Date(departureDate);
   returnDate.setDate(returnDate.getDate() + ticket.nights);
 
-  const response = await fetch(DUFFEL_PROXY_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      origin: ticket.departureCode,
-      destination: ticket.code,
-      departureDate: toISODate(departureDate),
-      returnDate: toISODate(returnDate),
-      passengers: ticket.people,
-    }),
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data?.error || "Errore nella richiesta a Duffel");
+  try {
+    const response = await fetch(DUFFEL_PROXY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        origin: ticket.departureCode,
+        destination: ticket.code,
+        departureDate: toISODate(departureDate),
+        returnDate: toISODate(returnDate),
+        passengers: ticket.people,
+      }),
+      signal: controller.signal,
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.error || "Errore nella richiesta a Duffel");
+    }
+    return data; // { offers, cheapest, offerRequestId }
+  } finally {
+    clearTimeout(timer);
   }
-  return data; // { offers, cheapest, offerRequestId }
 }
 
 // Da un'offerta Duffel, ricava un'etichetta leggibile su scali (guarda la tratta di andata)
@@ -480,18 +488,48 @@ function stopsLabel(offer) {
   return `${stops} scali`;
 }
 
-function TicketCard({ r, departureCode, nights, people, budget, month, saved, onToggleSave, onOpen, getLivePrice, ensureLivePrice, liveKeyFor }) {
+// Raggruppa un elenco di destinazioni per continente e poi per paese/regione,
+// ordinando entrambi i livelli dal più economico (in base alla stima) al più caro.
+function groupByContinentAndCountry(list) {
+  const byContinent = {};
+  list.forEach((r) => {
+    byContinent[r.continent] = byContinent[r.continent] || {};
+    byContinent[r.continent][r.country] = byContinent[r.continent][r.country] || [];
+    byContinent[r.continent][r.country].push(r);
+  });
+  const continentMin = (continent) =>
+    Math.min(...Object.values(byContinent[continent]).map((arr) => arr[0].total));
+  const countryMin = (continent, country) => byContinent[continent][country][0].total;
+  const orderedContinents = Object.keys(byContinent).sort((a, b) => continentMin(a) - continentMin(b));
+  return orderedContinents.map((continent) => ({
+    continent,
+    total: Object.values(byContinent[continent]).reduce((acc, arr) => acc + arr.length, 0),
+    countries: Object.keys(byContinent[continent])
+      .sort((a, b) => countryMin(continent, a) - countryMin(continent, b))
+      .map((country) => ({ country, items: byContinent[continent][country] })),
+  }));
+}
+
+const AUTO_LOAD_LIMIT = 15; // quante schede caricano il prezzo del volo in automatico
+
+function TicketCard({ r, departureCode, nights, people, budget, month, saved, onToggleSave, onOpen, getLivePrice, ensureLivePrice, liveKeyFor, autoLoad = true }) {
   const monthLabel = MONTHS[r.month];
 
   // Prezzo del volo per QUESTO biglietto: legge/scrive la cache condivisa,
   // così la scheda e il dettaglio mostrano sempre lo stesso numero (una sola richiesta).
+  // Solo le prime AUTO_LOAD_LIMIT schede caricano il prezzo in automatico; le altre
+  // aspettano un click, per non far partire troppe richieste insieme.
   const key = liveKeyFor(departureCode, r.code, r.month, nights, people);
+  const [manualRequested, setManualRequested] = useState(false);
+  const shouldLoad = autoLoad || manualRequested;
   useEffect(() => {
-    ensureLivePrice(key, { departureCode, code: r.code, month: r.month, nights, people });
-  }, [key, ensureLivePrice, departureCode, r.code, r.month, nights, people]);
-  const live = getLivePrice(key) || "loading";
+    if (shouldLoad) {
+      ensureLivePrice(key, { departureCode, code: r.code, month: r.month, nights, people });
+    }
+  }, [key, ensureLivePrice, departureCode, r.code, r.month, nights, people, shouldLoad]);
+  const live = getLivePrice(key) || (shouldLoad ? "loading" : "idle");
 
-  const hasLivePrice = live && live !== "loading" && live !== "error" && live !== "empty" && live.cheapest;
+  const hasLivePrice = live && live !== "loading" && live !== "error" && live !== "empty" && live !== "idle" && live.cheapest;
   const liveIsEur = hasLivePrice && live.cheapest.currency === "EUR";
   const stops = hasLivePrice ? stopsLabel(live.cheapest) : null;
 
@@ -559,6 +597,18 @@ function TicketCard({ r, departureCode, nights, people, budget, month, saved, on
       </div>
 
       <div style={{ padding: "14px 20px 16px" }}>
+        {live === "idle" && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setManualRequested(true); }}
+            style={{
+              display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600,
+              color: "var(--coral)", background: "transparent", border: "1px solid var(--coral)",
+              borderRadius: 8, padding: "7px 12px", cursor: "pointer",
+            }}
+          >
+            <RefreshCw size={13} /> Carica il prezzo del volo
+          </button>
+        )}
         {live === "loading" && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--muted)" }}>
             <Loader2 size={16} className="pulciaro-spin" /> Cerco il prezzo del volo…
@@ -689,51 +739,16 @@ export default function Pulciaro() {
   }, [departure, nights, people, budget]);
 
   // Group the "suggested" results into continent -> country -> destinations
-  const groupedResults = useMemo(() => {
-    if (mode === "specific") return null;
-    const filtered = results.filter((r) => (budgetTab === "in" ? r.withinBudget : !r.withinBudget));
-    const byContinent = {};
-    filtered.forEach((r) => {
-      byContinent[r.continent] = byContinent[r.continent] || {};
-      byContinent[r.continent][r.country] = byContinent[r.continent][r.country] || [];
-      byContinent[r.continent][r.country].push(r);
-    });
-    // Items inside each country are already cheapest-first (filtered preserves the
-    // ascending sort of `results`). Order countries, and continents, the same way:
-    // by their cheapest destination, so the whole layout reads in budget order.
-    const continentMin = (continent) =>
-      Math.min(...Object.values(byContinent[continent]).map((arr) => arr[0].total));
-    const countryMin = (continent, country) => byContinent[continent][country][0].total;
-
-    const orderedContinents = Object.keys(byContinent).sort((a, b) => continentMin(a) - continentMin(b));
-
-    return orderedContinents.map((continent) => ({
-      continent,
-      total: Object.values(byContinent[continent]).reduce((acc, arr) => acc + arr.length, 0),
-      countries: Object.keys(byContinent[continent])
-        .sort((a, b) => countryMin(continent, a) - countryMin(continent, b))
-        .map((country) => ({ country, items: byContinent[continent][country] })),
-    }));
-  }, [results, mode, budgetTab]);
-
-  const toggleContinent = (continent) => setCollapsed((c) => ({ ...c, [continent]: !c[continent] }));
-
-  const adjustNights = (delta) => setNights((n) => Math.min(30, Math.max(1, n + delta)));
-  const adjustPeople = (delta) => setPeople((p) => Math.min(12, Math.max(1, p + delta)));
-
-  const openModal = (r) => setModalTicket(buildSnapshot(r));
-  const closeModal = () => setModalTicket(null);
-
   // Cache condivisa dei prezzi del volo: una sola richiesta per ogni combinazione
   // partenza/destinazione/mese/notti/persone, letta sia dalle schede in elenco che dal dettaglio.
   // Le richieste passano da una coda con un massimo di richieste "in volo" insieme
   // (troppe insieme mandano in errore il servizio), e ogni richiesta fallita viene
   // ritentata un paio di volte prima di arrendersi.
-  const MAX_CONCURRENT_LIVE = 4;
+  const MAX_CONCURRENT_LIVE = 5;
   const liveCacheRef = useRef({});
   const liveQueueRef = useRef([]); // { key, params }[]
   const liveInFlightRef = useRef(0);
-  const [, bumpLiveTick] = useState(0);
+  const [liveTick, bumpLiveTick] = useState(0);
 
   const liveKeyFor = useCallback(
     (departureCode, code, month, nights, people) => `${departureCode}_${code}_${month}_${nights}_${people}`,
@@ -772,6 +787,44 @@ export default function Pulciaro() {
     liveQueueRef.current.push({ key, params });
     processLiveQueue();
   }, [processLiveQueue]);
+
+  const groupedResults = useMemo(() => {
+    if (mode === "specific") return null;
+    const filtered = results.filter((r) => (budgetTab === "in" ? r.withinBudget : !r.withinBudget));
+
+    // Le prime AUTO_LOAD_LIMIT (già ordinate dalla più economica) caricano il prezzo
+    // in automatico; le altre aspettano un click, per non sovraccaricare Duffel.
+    const autoLoadCodes = new Set(filtered.slice(0, AUTO_LOAD_LIMIT).map((r) => r.code));
+
+    // Le destinazioni per cui Duffel ha già risposto "nessuna offerta" (tratta non
+    // disponibile da questo aeroporto di partenza) finiscono in una finestra a parte.
+    const withFlight = [];
+    const noFlight = [];
+    filtered.forEach((r) => {
+      const key = liveKeyFor(departure.code, r.code, r.month, nights, people);
+      if (getLivePrice(key) === "empty") {
+        noFlight.push(r);
+      } else {
+        withFlight.push(r);
+      }
+    });
+
+    return {
+      main: groupByContinentAndCountry(withFlight),
+      noFlight: groupByContinentAndCountry(noFlight),
+      noFlightCount: noFlight.length,
+      autoLoadCodes,
+    };
+  }, [results, mode, budgetTab, departure.code, nights, people, liveKeyFor, getLivePrice, liveTick]);
+
+  const [noFlightOpen, setNoFlightOpen] = useState(false);
+  const toggleContinent = (continent) => setCollapsed((c) => ({ ...c, [continent]: !c[continent] }));
+
+  const adjustNights = (delta) => setNights((n) => Math.min(30, Math.max(1, n + delta)));
+  const adjustPeople = (delta) => setPeople((p) => Math.min(12, Math.max(1, p + delta)));
+
+  const openModal = (r) => setModalTicket(buildSnapshot(r));
+  const closeModal = () => setModalTicket(null);
 
   const modalLiveKey = modalTicket
     ? liveKeyFor(modalTicket.departureCode, modalTicket.code, modalTicket.month, modalTicket.nights, modalTicket.people)
@@ -1183,7 +1236,7 @@ export default function Pulciaro() {
         </div>
       ) : (
         <div style={{ maxWidth: 1040, margin: "0 auto" }}>
-          {groupedResults.length === 0 && (
+          {groupedResults.main.length === 0 && groupedResults.noFlightCount === 0 && (
             <div style={{
               background: "var(--paper)", borderRadius: 14, padding: "28px 24px", textAlign: "center",
               color: "var(--muted)", fontSize: 13.5,
@@ -1191,7 +1244,7 @@ export default function Pulciaro() {
               Nessuna destinazione qui per ora — prova a cambiare budget o scheda.
             </div>
           )}
-          {groupedResults.map(({ continent, total, countries }) => {
+          {groupedResults.main.map(({ continent, total, countries }) => {
             const isCollapsed = !!collapsed[continent];
             return (
               <div key={continent} style={{ marginBottom: 20 }}>
@@ -1229,6 +1282,7 @@ export default function Pulciaro() {
                           budget={budget} month={month} saved={isSaved(ticketId(r, departure.code, r.month, nights, people))}
                           onToggleSave={(res) => toggleSave(buildSnapshot(res))} onOpen={openModal}
                           getLivePrice={getLivePrice} ensureLivePrice={ensureLivePrice} liveKeyFor={liveKeyFor}
+                          autoLoad={groupedResults.autoLoadCodes.has(r.code)}
                         />
                       ))}
                     </div>
@@ -1237,6 +1291,66 @@ export default function Pulciaro() {
               </div>
             );
           })}
+
+          {groupedResults.noFlightCount > 0 && (
+            <div style={{ marginTop: 8 }}>
+              <button
+                onClick={() => setNoFlightOpen((v) => !v)}
+                style={{
+                  width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                  background: "transparent", border: "1px dashed var(--muted)", borderRadius: 10, padding: "10px 16px",
+                  cursor: "pointer", marginBottom: noFlightOpen ? 12 : 0,
+                }}
+              >
+                <span style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600, fontSize: 13.5, color: "var(--muted)" }}>
+                  <Plane size={15} style={{ opacity: 0.6 }} /> Senza voli disponibili da {departure.name}
+                  <span className="pulciaro-mono" style={{ fontSize: 11.5, fontWeight: 400 }}>
+                    ({groupedResults.noFlightCount})
+                  </span>
+                </span>
+                {noFlightOpen ? <ChevronUp size={16} color="var(--muted)" /> : <ChevronDown size={16} color="var(--muted)" />}
+              </button>
+
+              {noFlightOpen && (
+                <>
+                  <div style={{ fontSize: 12, color: "var(--muted)", margin: "0 4px 12px" }}>
+                    Per queste destinazioni non risulta una rotta diretta o indiretta prenotabile da {departure.name}. Provando un'altra città di partenza potrebbero comparire.
+                  </div>
+                  {groupedResults.noFlight.map(({ continent, total, countries }) => (
+                    <div key={continent} style={{ marginBottom: 20 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 14, color: "var(--muted)", margin: "0 4px 12px" }}>
+                        <Globe2 size={15} /> {continent}
+                        <span className="pulciaro-mono" style={{ fontSize: 11, fontWeight: 400 }}>({total})</span>
+                      </div>
+                      {countries.map(({ country, items }) => (
+                        <div key={country} style={{ marginBottom: 16 }}>
+                          <div style={{
+                            fontSize: 12.5, fontWeight: 600, color: "var(--muted)", margin: "0 4px 8px",
+                            display: "flex", alignItems: "center", gap: 6,
+                          }}>
+                            <span style={{ fontSize: 15 }}>{items[0].flag}</span> {country}
+                          </div>
+                          <div style={{
+                            display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16,
+                          }}>
+                            {items.map((r) => (
+                              <TicketCard
+                                key={r.code} r={r} departureCode={departure.code} nights={nights} people={people}
+                                budget={budget} month={month} saved={isSaved(ticketId(r, departure.code, r.month, nights, people))}
+                                onToggleSave={(res) => toggleSave(buildSnapshot(res))} onOpen={openModal}
+                                getLivePrice={getLivePrice} ensureLivePrice={ensureLivePrice} liveKeyFor={liveKeyFor}
+                                autoLoad={true}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
         </div>
       )}
 
