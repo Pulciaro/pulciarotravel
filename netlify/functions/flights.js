@@ -94,7 +94,13 @@ exports.handler = async (event) => {
 
     const offers = data?.data?.offers || [];
 
-    const simplified = offers
+    // Duffel Airways (codice IATA "ZZ") è una compagnia FINTA che Duffel stessa aggiunge
+    // in modalità test per rendere le prove più stabili. La escludiamo sempre: l'utente
+    // deve poter comprare esattamente il volo che gli mostriamo, quindi meglio nessun
+    // risultato che un risultato non reale.
+    const realOffers = offers.filter((o) => o.owner?.iata_code !== "ZZ");
+
+    const simplified = realOffers
       .map((o) => ({
         id: o.id,
         totalAmount: parseFloat(o.total_amount),
