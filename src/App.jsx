@@ -294,9 +294,39 @@ async function fetchRealFlightPrice(ticket) {
   return data; // { offers, cheapest, offerRequestId }
 }
 
+// Da un'offerta Duffel, ricava un'etichetta leggibile su scali (guarda la tratta di andata)
+function stopsLabel(offer) {
+  if (!offer || !offer.slices || !offer.slices[0]) return null;
+  const stops = offer.slices[0].stops || 0;
+  if (stops === 0) return "diretto";
+  if (stops === 1) return "1 scalo";
+  return `${stops} scali`;
+}
+
 function TicketCard({ r, departureCode, nights, people, budget, month, saved, onToggleSave, onOpen }) {
-  const diff = r.total - budget;
   const monthLabel = MONTHS[r.month];
+
+  // Prezzo reale del volo per QUESTO biglietto, caricato appena la scheda appare.
+  const [live, setLive] = useState("loading"); // 'loading' | 'error' | 'empty' | { cheapest, offers }
+  useEffect(() => {
+    let cancelled = false;
+    setLive("loading");
+    fetchRealFlightPrice({ departureCode, code: r.code, month: r.month, nights, people })
+      .then((data) => { if (!cancelled) setLive(data.cheapest ? data : "empty"); })
+      .catch(() => { if (!cancelled) setLive("error"); });
+    return () => { cancelled = true; };
+  }, [r.code, r.month, departureCode, nights, people]);
+
+  const hasLivePrice = live && live !== "loading" && live !== "error" && live !== "empty" && live.cheapest;
+  const liveIsEur = hasLivePrice && live.cheapest.currency === "EUR";
+
+  // Il totale mostrato: se abbiamo un prezzo volo reale in EUR, lo sommiamo all'alloggio (stimato);
+  // altrimenti resta la stima completa di partenza.
+  const displayTotal = liveIsEur ? Math.round(live.cheapest.totalAmount + r.hotel) : r.total;
+  const diff = displayTotal - budget;
+  const withinBudgetLive = displayTotal <= budget;
+  const stops = hasLivePrice ? stopsLabel(live.cheapest) : null;
+
   return (
     <div
       role="button"
@@ -341,8 +371,18 @@ function TicketCard({ r, departureCode, nights, people, budget, month, saved, on
           <div style={{ flex: 1, borderTop: "1px dashed var(--line)" }} />
           <span className="pulciaro-mono">{r.code}</span>
         </div>
-        <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
-          {month === "flex" ? `Mese migliore: ${monthLabel}` : `Partenza: ${monthLabel}`} · {nights} {nights === 1 ? "notte" : "notti"}
+        <div style={{ fontSize: 11.5, color: "var(--muted)", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+          <span>{month === "flex" ? `Mese migliore: ${monthLabel}` : `Partenza: ${monthLabel}`} · {nights} {nights === 1 ? "notte" : "notti"}</span>
+          {live === "loading" && (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <Loader2 size={11} className="pulciaro-spin" /> prezzo reale…
+            </span>
+          )}
+          {stops && (
+            <span className="pulciaro-mono" style={{ fontSize: 10.5, padding: "1px 6px", borderRadius: 10, background: "var(--bg-deep)" }}>
+              {stops}
+            </span>
+          )}
         </div>
       </div>
 
@@ -354,15 +394,16 @@ function TicketCard({ r, departureCode, nights, people, budget, month, saved, on
       <div style={{ padding: "14px 20px 16px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <div className="pulciaro-mono" style={{ fontSize: 26, fontWeight: 700, color: r.withinBudget ? "var(--ink)" : "#9c5238" }}>€{r.total}</div>
+            <div className="pulciaro-mono" style={{ fontSize: 26, fontWeight: 700, color: withinBudgetLive ? "var(--ink)" : "#9c5238" }}>€{displayTotal}</div>
             <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
               {people > 1 ? `volo + alloggio, totale per ${people} persone` : "volo + alloggio, totale viaggio"}
+              {liveIsEur ? " · volo reale" : " · stima"}
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
-            {r.withinBudget ? (
+            {withinBudgetLive ? (
               <span style={{ fontSize: 11.5, fontWeight: 600, color: "#2c6b45", background: "#dcefe0", padding: "4px 9px", borderRadius: 20 }}>
-                risparmi €{budget - r.total}
+                risparmi €{budget - displayTotal}
               </span>
             ) : (
               <span style={{ fontSize: 11.5, fontWeight: 600, color: "#9c4a34", background: "#f6e2da", padding: "4px 9px", borderRadius: 20 }}>
@@ -514,6 +555,15 @@ export default function Pulciaro() {
       setRealFlight(null);
     }
   }, [modalTicket, loadRealFlight]);
+
+  const modalHasLivePrice = realFlight && realFlight !== "loading" && realFlight !== "error" && realFlight !== "empty" && realFlight.cheapest;
+  const modalLiveIsEur = modalHasLivePrice && realFlight.cheapest.currency === "EUR";
+  const modalStops = modalHasLivePrice ? stopsLabel(realFlight.cheapest) : null;
+  const modalDisplayTotal = modalTicket
+    ? (modalLiveIsEur ? Math.round(realFlight.cheapest.totalAmount + modalTicket.hotel) : modalTicket.total)
+    : 0;
+  const modalWithinBudgetLive = modalTicket ? modalDisplayTotal <= modalTicket.budget : true;
+  const modalDiff = modalDisplayTotal - (modalTicket ? modalTicket.budget : 0);
 
   const doShareWhatsApp = (t) => {
     window.open(`https://wa.me/?text=${encodeURIComponent(shareText(t))}`, "_blank", "noopener,noreferrer");
@@ -1050,13 +1100,23 @@ export default function Pulciaro() {
                 )}
 
                 {realFlight && realFlight !== "loading" && realFlight !== "error" && realFlight !== "empty" && realFlight.cheapest && (
-                  <div style={{ marginTop: 6 }}>
+                  <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     <div className="pulciaro-mono" style={{ fontSize: 19, fontWeight: 700 }}>
                       {realFlight.cheapest.totalAmount} {realFlight.cheapest.currency}
                     </div>
-                    <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                    {modalStops && (
+                      <span className="pulciaro-mono" style={{ fontSize: 10.5, padding: "2px 7px", borderRadius: 10, background: "var(--bg-deep)" }}>
+                        {modalStops}
+                      </span>
+                    )}
+                    <div style={{ fontSize: 12, color: "var(--muted)", width: "100%" }}>
                       {realFlight.cheapest.airline}{realFlight.offers?.length > 1 ? ` · +${realFlight.offers.length - 1} altre offerte trovate` : ""}
                     </div>
+                    {!modalLiveIsEur && (
+                      <div style={{ fontSize: 11, color: "var(--muted)", width: "100%" }}>
+                        Valuta diversa dall'euro: non sommata al totale qui sotto, che resta la stima.
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1072,18 +1132,20 @@ export default function Pulciaro() {
                 paddingTop: 14, borderTop: "2px dashed var(--line)",
               }}>
                 <div>
-                  <div className="pulciaro-mono" style={{ fontSize: 26, fontWeight: 700, color: modalTicket.withinBudget ? "var(--ink)" : "#9c5238" }}>
-                    €{modalTicket.total}
+                  <div className="pulciaro-mono" style={{ fontSize: 26, fontWeight: 700, color: modalWithinBudgetLive ? "var(--ink)" : "#9c5238" }}>
+                    €{modalDisplayTotal}
                   </div>
-                  <div style={{ fontSize: 11.5, color: "var(--muted)" }}>totale volo + alloggio</div>
+                  <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
+                    totale volo + alloggio {modalLiveIsEur ? "(volo reale)" : "(stima)"}
+                  </div>
                 </div>
-                {modalTicket.withinBudget ? (
+                {modalWithinBudgetLive ? (
                   <span style={{ fontSize: 11.5, fontWeight: 600, color: "#2c6b45", background: "#dcefe0", padding: "4px 9px", borderRadius: 20 }}>
-                    risparmi €{modalTicket.budget - modalTicket.total}
+                    risparmi €{modalTicket.budget - modalDisplayTotal}
                   </span>
                 ) : (
                   <span style={{ fontSize: 11.5, fontWeight: 600, color: "#9c4a34", background: "#f6e2da", padding: "4px 9px", borderRadius: 20 }}>
-                    +€{modalTicket.diff} sul budget
+                    +€{modalDiff} sul budget
                   </span>
                 )}
               </div>
