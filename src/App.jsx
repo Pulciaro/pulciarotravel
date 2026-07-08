@@ -483,8 +483,8 @@ function stopsLabel(offer) {
 function TicketCard({ r, departureCode, nights, people, budget, month, saved, onToggleSave, onOpen, getLivePrice, ensureLivePrice, liveKeyFor }) {
   const monthLabel = MONTHS[r.month];
 
-  // Prezzo reale del volo per QUESTO biglietto: legge/scrive la cache condivisa,
-  // così la scheda e il dettaglio mostrano sempre lo stesso numero (una sola richiesta a Duffel).
+  // Prezzo del volo per QUESTO biglietto: legge/scrive la cache condivisa,
+  // così la scheda e il dettaglio mostrano sempre lo stesso numero (una sola richiesta).
   const key = liveKeyFor(departureCode, r.code, r.month, nights, people);
   useEffect(() => {
     ensureLivePrice(key, { departureCode, code: r.code, month: r.month, nights, people });
@@ -493,13 +493,11 @@ function TicketCard({ r, departureCode, nights, people, budget, month, saved, on
 
   const hasLivePrice = live && live !== "loading" && live !== "error" && live !== "empty" && live.cheapest;
   const liveIsEur = hasLivePrice && live.cheapest.currency === "EUR";
-
-  // Il totale mostrato: se abbiamo un prezzo volo reale in EUR, lo sommiamo all'alloggio (stimato);
-  // altrimenti resta la stima completa di partenza.
-  const displayTotal = liveIsEur ? Math.round(live.cheapest.totalAmount + r.hotel) : r.total;
-  const diff = displayTotal - budget;
-  const withinBudgetLive = displayTotal <= budget;
   const stops = hasLivePrice ? stopsLabel(live.cheapest) : null;
+
+  const displayTotal = liveIsEur ? Math.round(live.cheapest.totalAmount + r.hotel) : null;
+  const diff = displayTotal != null ? displayTotal - budget : null;
+  const withinBudgetLive = displayTotal != null ? displayTotal <= budget : null;
 
   return (
     <div
@@ -547,11 +545,6 @@ function TicketCard({ r, departureCode, nights, people, budget, month, saved, on
         </div>
         <div style={{ fontSize: 11.5, color: "var(--muted)", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
           <span>{month === "flex" ? `Mese migliore: ${monthLabel}` : `Partenza: ${monthLabel}`} · {nights} {nights === 1 ? "notte" : "notti"}</span>
-          {live === "loading" && (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-              <Loader2 size={11} className="pulciaro-spin" /> prezzo reale…
-            </span>
-          )}
           {stops && (
             <span className="pulciaro-mono" style={{ fontSize: 10.5, padding: "1px 6px", borderRadius: 10, background: "var(--bg-deep)" }}>
               {stops}
@@ -566,29 +559,51 @@ function TicketCard({ r, departureCode, nights, people, budget, month, saved, on
       </div>
 
       <div style={{ padding: "14px 20px 16px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        {live === "loading" && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--muted)" }}>
+            <Loader2 size={16} className="pulciaro-spin" /> Cerco il prezzo del volo…
+          </div>
+        )}
+        {live === "error" && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "#9c4a34" }}>
+            <AlertTriangle size={15} /> Prezzo del volo non disponibile ora, riprova più tardi
+          </div>
+        )}
+        {live === "empty" && (
+          <div style={{ fontSize: 12.5, color: "var(--muted)" }}>Nessun volo trovato per questa data</div>
+        )}
+        {hasLivePrice && liveIsEur && (
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div className="pulciaro-mono" style={{ fontSize: 26, fontWeight: 700, color: withinBudgetLive ? "var(--ink)" : "#9c5238" }}>€{displayTotal}</div>
+              <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
+                {people > 1 ? `volo + alloggio (stima), per ${people} persone` : "volo + alloggio (stima)"}
+              </div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              {withinBudgetLive ? (
+                <span style={{ fontSize: 11.5, fontWeight: 600, color: "#2c6b45", background: "#dcefe0", padding: "4px 9px", borderRadius: 20 }}>
+                  risparmi €{budget - displayTotal}
+                </span>
+              ) : (
+                <span style={{ fontSize: 11.5, fontWeight: 600, color: "#9c4a34", background: "#f6e2da", padding: "4px 9px", borderRadius: 20 }}>
+                  +€{diff} sul budget
+                </span>
+              )}
+              <div style={{ marginTop: 6, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, fontSize: 12, color: "var(--muted)" }}>
+                Dettagli e condivisione <ChevronDown size={13} style={{ transform: "rotate(-90deg)" }} />
+              </div>
+            </div>
+          </div>
+        )}
+        {hasLivePrice && !liveIsEur && (
           <div>
-            <div className="pulciaro-mono" style={{ fontSize: 26, fontWeight: 700, color: withinBudgetLive ? "var(--ink)" : "#9c5238" }}>€{displayTotal}</div>
-            <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
-              {people > 1 ? `volo + alloggio, totale per ${people} persone` : "volo + alloggio, totale viaggio"}
-              {liveIsEur ? " · volo reale" : " · stima"}
+            <div className="pulciaro-mono" style={{ fontSize: 20, fontWeight: 700 }}>
+              {live.cheapest.totalAmount} {live.cheapest.currency} <span style={{ fontSize: 12, fontWeight: 400, color: "var(--muted)" }}>volo</span>
             </div>
+            <div style={{ fontSize: 11.5, color: "var(--muted)" }}>+ alloggio stimato €{r.hotel} (valuta diversa, non sommati)</div>
           </div>
-          <div style={{ textAlign: "right" }}>
-            {withinBudgetLive ? (
-              <span style={{ fontSize: 11.5, fontWeight: 600, color: "#2c6b45", background: "#dcefe0", padding: "4px 9px", borderRadius: 20 }}>
-                risparmi €{budget - displayTotal}
-              </span>
-            ) : (
-              <span style={{ fontSize: 11.5, fontWeight: 600, color: "#9c4a34", background: "#f6e2da", padding: "4px 9px", borderRadius: 20 }}>
-                +€{diff} sul budget
-              </span>
-            )}
-            <div style={{ marginTop: 6, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, fontSize: 12, color: "var(--muted)" }}>
-              Dettagli e condivisione <ChevronDown size={13} style={{ transform: "rotate(-90deg)" }} />
-            </div>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -709,24 +724,54 @@ export default function Pulciaro() {
   const openModal = (r) => setModalTicket(buildSnapshot(r));
   const closeModal = () => setModalTicket(null);
 
-  // Cache condivisa dei prezzi reali Duffel: una sola richiesta per ogni combinazione
+  // Cache condivisa dei prezzi del volo: una sola richiesta per ogni combinazione
   // partenza/destinazione/mese/notti/persone, letta sia dalle schede in elenco che dal dettaglio.
+  // Le richieste passano da una coda con un massimo di richieste "in volo" insieme
+  // (troppe insieme mandano in errore il servizio), e ogni richiesta fallita viene
+  // ritentata un paio di volte prima di arrendersi.
+  const MAX_CONCURRENT_LIVE = 4;
   const liveCacheRef = useRef({});
+  const liveQueueRef = useRef([]); // { key, params }[]
+  const liveInFlightRef = useRef(0);
   const [, bumpLiveTick] = useState(0);
+
   const liveKeyFor = useCallback(
     (departureCode, code, month, nights, people) => `${departureCode}_${code}_${month}_${nights}_${people}`,
     []
   );
   const getLivePrice = useCallback((key) => liveCacheRef.current[key], []);
+
+  const fetchWithRetry = useCallback((params, retriesLeft) => {
+    return fetchRealFlightPrice(params).catch((err) => {
+      if (retriesLeft > 0) {
+        return new Promise((resolve) => setTimeout(resolve, 700)).then(() => fetchWithRetry(params, retriesLeft - 1));
+      }
+      throw err;
+    });
+  }, []);
+
+  const processLiveQueue = useCallback(() => {
+    while (liveInFlightRef.current < MAX_CONCURRENT_LIVE && liveQueueRef.current.length > 0) {
+      const { key, params } = liveQueueRef.current.shift();
+      liveInFlightRef.current += 1;
+      fetchWithRetry(params, 2)
+        .then((data) => { liveCacheRef.current[key] = data.cheapest ? data : "empty"; })
+        .catch(() => { liveCacheRef.current[key] = "error"; })
+        .finally(() => {
+          liveInFlightRef.current -= 1;
+          bumpLiveTick((n) => n + 1);
+          processLiveQueue();
+        });
+    }
+  }, [fetchWithRetry]);
+
   const ensureLivePrice = useCallback((key, params, force = false) => {
-    if (!force && liveCacheRef.current[key]) return; // già in cache o in corso
+    if (!force && liveCacheRef.current[key]) return; // già in cache, in coda o in corso
     liveCacheRef.current[key] = "loading";
     bumpLiveTick((n) => n + 1);
-    fetchRealFlightPrice(params)
-      .then((data) => { liveCacheRef.current[key] = data.cheapest ? data : "empty"; })
-      .catch(() => { liveCacheRef.current[key] = "error"; })
-      .finally(() => bumpLiveTick((n) => n + 1));
-  }, []);
+    liveQueueRef.current.push({ key, params });
+    processLiveQueue();
+  }, [processLiveQueue]);
 
   const modalLiveKey = modalTicket
     ? liveKeyFor(modalTicket.departureCode, modalTicket.code, modalTicket.month, modalTicket.nights, modalTicket.people)
@@ -752,11 +797,9 @@ export default function Pulciaro() {
   const modalHasLivePrice = realFlight && realFlight !== "loading" && realFlight !== "error" && realFlight !== "empty" && realFlight.cheapest;
   const modalLiveIsEur = modalHasLivePrice && realFlight.cheapest.currency === "EUR";
   const modalStops = modalHasLivePrice ? stopsLabel(realFlight.cheapest) : null;
-  const modalDisplayTotal = modalTicket
-    ? (modalLiveIsEur ? Math.round(realFlight.cheapest.totalAmount + modalTicket.hotel) : modalTicket.total)
-    : 0;
-  const modalWithinBudgetLive = modalTicket ? modalDisplayTotal <= modalTicket.budget : true;
-  const modalDiff = modalDisplayTotal - (modalTicket ? modalTicket.budget : 0);
+  const modalDisplayTotal = (modalTicket && modalLiveIsEur) ? Math.round(realFlight.cheapest.totalAmount + modalTicket.hotel) : null;
+  const modalWithinBudgetLive = modalDisplayTotal != null ? modalDisplayTotal <= modalTicket.budget : null;
+  const modalDiff = modalDisplayTotal != null ? modalDisplayTotal - modalTicket.budget : null;
 
   const doShareWhatsApp = (t) => {
     window.open(`https://wa.me/?text=${encodeURIComponent(shareText(t))}`, "_blank", "noopener,noreferrer");
@@ -1199,7 +1242,7 @@ export default function Pulciaro() {
 
       <div style={{ maxWidth: 1040, margin: "26px auto 0", display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12, color: "var(--muted)" }}>
         <Info size={14} style={{ marginTop: 1, flexShrink: 0 }} />
-        <span>Prototipo con dati di esempio: prezzi e stagionalità sono simulati. Apri il dettaglio di un biglietto per vedere il prezzo reale del volo da Duffel (richiede il backend configurato in <span className="pulciaro-mono">DUFFEL_PROXY_URL</span>). L'alloggio resta simulato.</span>
+        <span>Prototipo con dati di esempio: prezzi e stagionalità sono simulati. Apri il dettaglio di un biglietto per vedere il prezzo del volo (richiede il backend configurato in <span className="pulciaro-mono">DUFFEL_PROXY_URL</span>). L'alloggio resta simulato.</span>
       </div>
       </>
       )}
@@ -1245,28 +1288,17 @@ export default function Pulciaro() {
             </div>
 
             <div style={{ padding: "0 22px 18px" }}>
-              <div style={{ display: "flex", gap: 10, padding: "12px 0", borderTop: "1px solid var(--bg-deep)" }}>
-                <Plane size={15} color="var(--coral)" style={{ marginTop: 2 }} />
-                <div style={{ fontSize: 12.5 }}>
-                  <div style={{ fontWeight: 600 }}>{modalTicket.airline} · {modalTicket.departureCode} → {modalTicket.code}, andata e ritorno</div>
-                  <div style={{ color: "var(--muted)" }} className="pulciaro-mono">
-                    €{modalTicket.flightPerPerson} a persona{modalTicket.people > 1 ? ` · €${modalTicket.flight} totale per ${modalTicket.people} persone` : ""} <span style={{ opacity: 0.7 }}>(stima)</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Prezzo reale del volo, da Duffel */}
               <div style={{
                 margin: "4px 0 2px", padding: "10px 12px", borderRadius: 10,
                 background: "var(--bg)", border: "1px solid var(--line)",
               }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                   <span style={{ fontSize: 11.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: "var(--muted)" }}>
-                    Prezzo reale del volo (Duffel)
+                    Prezzo del volo
                   </span>
                   <button
                     onClick={refreshModalPrice}
-                    aria-label="Aggiorna prezzo reale"
+                    aria-label="Aggiorna prezzo"
                     style={{ background: "transparent", border: "none", cursor: "pointer", padding: 2, display: "flex" }}
                   >
                     <RefreshCw size={13} color="var(--muted)" style={{ transform: realFlight === "loading" ? "rotate(180deg)" : "none", transition: "transform 0.3s" }} />
@@ -1275,7 +1307,7 @@ export default function Pulciaro() {
 
                 {realFlight === "loading" && (
                   <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--muted)", marginTop: 6 }}>
-                    <Loader2 size={14} className="pulciaro-spin" /> Cerco voli reali su Duffel…
+                    <Loader2 size={14} className="pulciaro-spin" /> Cerco il prezzo del volo…
                   </div>
                 )}
 
@@ -1283,14 +1315,14 @@ export default function Pulciaro() {
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 6, fontSize: 12, color: "#9c4a34", marginTop: 6 }}>
                     <AlertTriangle size={14} style={{ marginTop: 1, flexShrink: 0 }} />
                     <span>
-                      Non riesco a contattare Duffel. Controlla che <code className="pulciaro-mono" style={{ fontSize: 11 }}>DUFFEL_PROXY_URL</code> punti al tuo backend e che la chiave API sia configurata.
+                      Non riesco a trovare un prezzo in questo momento. Riprova tra poco con l'icona qui sopra.
                     </span>
                   </div>
                 )}
 
                 {realFlight === "empty" && (
                   <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 6 }}>
-                    Nessuna offerta trovata da Duffel per questa rotta/data.
+                    Nessuna offerta trovata per questa rotta/data.
                   </div>
                 )}
 
@@ -1309,7 +1341,7 @@ export default function Pulciaro() {
                     </div>
                     {!modalLiveIsEur && (
                       <div style={{ fontSize: 11, color: "var(--muted)", width: "100%" }}>
-                        Valuta diversa dall'euro: non sommata al totale qui sotto, che resta la stima.
+                        Valuta diversa dall'euro: non sommata al prezzo dell'alloggio qui sotto.
                       </div>
                     )}
                   </div>
@@ -1326,22 +1358,30 @@ export default function Pulciaro() {
                 display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10,
                 paddingTop: 14, borderTop: "2px dashed var(--line)",
               }}>
-                <div>
-                  <div className="pulciaro-mono" style={{ fontSize: 26, fontWeight: 700, color: modalWithinBudgetLive ? "var(--ink)" : "#9c5238" }}>
-                    €{modalDisplayTotal}
-                  </div>
-                  <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
-                    totale volo + alloggio {modalLiveIsEur ? "(volo reale)" : "(stima)"}
-                  </div>
-                </div>
-                {modalWithinBudgetLive ? (
-                  <span style={{ fontSize: 11.5, fontWeight: 600, color: "#2c6b45", background: "#dcefe0", padding: "4px 9px", borderRadius: 20 }}>
-                    risparmi €{modalTicket.budget - modalDisplayTotal}
-                  </span>
+                {modalDisplayTotal != null ? (
+                  <>
+                    <div>
+                      <div className="pulciaro-mono" style={{ fontSize: 26, fontWeight: 700, color: modalWithinBudgetLive ? "var(--ink)" : "#9c5238" }}>
+                        €{modalDisplayTotal}
+                      </div>
+                      <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
+                        totale volo + alloggio (stima)
+                      </div>
+                    </div>
+                    {modalWithinBudgetLive ? (
+                      <span style={{ fontSize: 11.5, fontWeight: 600, color: "#2c6b45", background: "#dcefe0", padding: "4px 9px", borderRadius: 20 }}>
+                        risparmi €{modalTicket.budget - modalDisplayTotal}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 11.5, fontWeight: 600, color: "#9c4a34", background: "#f6e2da", padding: "4px 9px", borderRadius: 20 }}>
+                        +€{modalDiff} sul budget
+                      </span>
+                    )}
+                  </>
                 ) : (
-                  <span style={{ fontSize: 11.5, fontWeight: 600, color: "#9c4a34", background: "#f6e2da", padding: "4px 9px", borderRadius: 20 }}>
-                    +€{modalDiff} sul budget
-                  </span>
+                  <div style={{ fontSize: 12.5, color: "var(--muted)" }}>
+                    Il totale apparirà appena arriva il prezzo del volo.
+                  </div>
                 )}
               </div>
             </div>
