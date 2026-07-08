@@ -144,7 +144,172 @@ const DESTINATIONS = [
     flightMult: [0.9,0.9,0.95,1.0,1.05,1.15,1.25,1.25,1.1,1.0,0.9,1.3],
     hotelMult:  [0.85,0.85,0.9,0.95,1.0,1.05,1.15,1.15,1.05,0.95,0.9,1.2] },
 
+
+// --- Destinazioni italiane (viaggi domestici), raggruppate per regione sotto "Italia" ---
+  { name: "Roma", country: "Lazio", flag: "🇮🇹", code: "FCO", region: "nazionale", profile: "italia_arte", flightBase: 45, hotelBase: 70, lat: 41.9028, lng: 12.4964 },
+  { name: "Milano", country: "Lombardia", flag: "🇮🇹", code: "MXP", region: "nazionale", profile: "italia_business", flightBase: 45, hotelBase: 75, lat: 45.4642, lng: 9.19 },
+  { name: "Venezia", country: "Veneto", flag: "🇮🇹", code: "VCE", region: "nazionale", profile: "italia_arte", flightBase: 55, hotelBase: 85, lat: 45.4408, lng: 12.3155 },
+  { name: "Napoli", country: "Campania", flag: "🇮🇹", code: "NAP", region: "nazionale", profile: "italia_arte", flightBase: 45, hotelBase: 55, lat: 40.8518, lng: 14.2681 },
+  { name: "Bologna", country: "Emilia-Romagna", flag: "🇮🇹", code: "BLQ", region: "nazionale", profile: "italia_business", flightBase: 40, hotelBase: 55, lat: 44.4949, lng: 11.3426 },
+  { name: "Torino", country: "Piemonte", flag: "🇮🇹", code: "TRN", region: "nazionale", profile: "italia_business", flightBase: 40, hotelBase: 55, lat: 45.0703, lng: 7.6869 },
+  { name: "Palermo", country: "Sicilia", flag: "🇮🇹", code: "PMO", region: "nazionale", profile: "italia_mare", flightBase: 55, hotelBase: 50, lat: 38.1157, lng: 13.3615 },
+  { name: "Catania", country: "Sicilia", flag: "🇮🇹", code: "CTA", region: "nazionale", profile: "italia_mare", flightBase: 55, hotelBase: 50, lat: 37.5079, lng: 15.083 },
+  { name: "Bari", country: "Puglia", flag: "🇮🇹", code: "BRI", region: "nazionale", profile: "italia_mare", flightBase: 50, hotelBase: 48, lat: 41.1171, lng: 16.8719 },
+  { name: "Cagliari", country: "Sardegna", flag: "🇮🇹", code: "CAG", region: "nazionale", profile: "italia_mare", flightBase: 60, hotelBase: 55, lat: 39.2238, lng: 9.1217 },
+  { name: "Firenze", country: "Toscana", flag: "🇮🇹", code: "FLR", region: "nazionale", profile: "italia_arte", flightBase: 50, hotelBase: 75, lat: 43.7696, lng: 11.2558 },
+  { name: "Verona", country: "Veneto", flag: "🇮🇹", code: "VRN", region: "nazionale", profile: "italia_arte", flightBase: 48, hotelBase: 60, lat: 45.4384, lng: 10.9916 },
+  { name: "Genova", country: "Liguria", flag: "🇮🇹", code: "GOA", region: "nazionale", profile: "italia_business", flightBase: 42, hotelBase: 55, lat: 44.4056, lng: 8.9463 },
+  { name: "Pisa", country: "Toscana", flag: "🇮🇹", code: "PSA", region: "nazionale", profile: "italia_arte", flightBase: 48, hotelBase: 60, lat: 43.7228, lng: 10.4017 },
+  { name: "Trieste", country: "Friuli-Venezia Giulia", flag: "🇮🇹", code: "TRS", region: "nazionale", profile: "italia_business", flightBase: 45, hotelBase: 50, lat: 45.6495, lng: 13.7768 },
+  { name: "Alghero", country: "Sardegna", flag: "🇮🇹", code: "AHO", region: "nazionale", profile: "italia_mare", flightBase: 65, hotelBase: 55, lat: 40.5589, lng: 8.3181 },
+  { name: "Olbia", country: "Sardegna", flag: "🇮🇹", code: "OLB", region: "nazionale", profile: "italia_mare", flightBase: 70, hotelBase: 65, lat: 40.9236, lng: 9.498 },
+  { name: "Brindisi", country: "Puglia", flag: "🇮🇹", code: "BDS", region: "nazionale", profile: "italia_mare", flightBase: 55, hotelBase: 45, lat: 40.632, lng: 17.937 },
+  { name: "Lamezia Terme", country: "Calabria", flag: "🇮🇹", code: "SUF", region: "nazionale", profile: "italia_mare", flightBase: 55, hotelBase: 42, lat: 38.9686, lng: 16.3007 },
+  { name: "Pescara", country: "Abruzzo", flag: "🇮🇹", code: "PSR", region: "nazionale", profile: "italia_mare", flightBase: 50, hotelBase: 45, lat: 42.4643, lng: 14.2142 },
+  { name: "Rimini", country: "Emilia-Romagna", flag: "🇮🇹", code: "RMI", region: "nazionale", profile: "italia_mare", flightBase: 45, hotelBase: 55, lat: 44.0678, lng: 12.5695 },
+  { name: "Trapani", country: "Sicilia", flag: "🇮🇹", code: "TPS", region: "nazionale", profile: "italia_mare", flightBase: 60, hotelBase: 45, lat: 38.0176, lng: 12.5365 },
+  { name: "Reggio Calabria", country: "Calabria", flag: "🇮🇹", code: "REG", region: "nazionale", profile: "italia_mare", flightBase: 60, hotelBase: 42, lat: 38.1147, lng: 15.65 },
+  { name: "Ancona", country: "Marche", flag: "🇮🇹", code: "AOI", region: "nazionale", profile: "italia_business", flightBase: 45, hotelBase: 45, lat: 43.6158, lng: 13.5189 },
+  { name: "Perugia", country: "Umbria", flag: "🇮🇹", code: "PEG", region: "nazionale", profile: "italia_arte", flightBase: 55, hotelBase: 50, lat: 43.1122, lng: 12.3888 },
+  { name: "Parma", country: "Emilia-Romagna", flag: "🇮🇹", code: "PMF", region: "nazionale", profile: "italia_business", flightBase: 45, hotelBase: 55, lat: 44.8015, lng: 10.3279 },
+  { name: "Treviso", country: "Veneto", flag: "🇮🇹", code: "TSF", region: "nazionale", profile: "italia_business", flightBase: 42, hotelBase: 55, lat: 45.6669, lng: 12.2433 },
+  { name: "Comiso", country: "Sicilia", flag: "🇮🇹", code: "CIY", region: "nazionale", profile: "italia_mare", flightBase: 65, hotelBase: 45, lat: 36.9455, lng: 14.6079 },
+  { name: "Crotone", country: "Calabria", flag: "🇮🇹", code: "CRV", region: "nazionale", profile: "italia_mare", flightBase: 65, hotelBase: 40, lat: 39.0808, lng: 17.1269 },
+  { name: "Foggia", country: "Puglia", flag: "🇮🇹", code: "FOG", region: "nazionale", profile: "italia_mare", flightBase: 55, hotelBase: 42, lat: 41.4622, lng: 15.5446 },
+  { name: "Cuneo", country: "Piemonte", flag: "🇮🇹", code: "CUF", region: "nazionale", profile: "italia_business", flightBase: 55, hotelBase: 45, lat: 44.3841, lng: 7.5426 },
+  { name: "Pantelleria", country: "Sicilia", flag: "🇮🇹", code: "PNL", region: "nazionale", profile: "italia_mare", flightBase: 95, hotelBase: 60, lat: 36.8333, lng: 11.95 },
+  { name: "Lampedusa", country: "Sicilia", flag: "🇮🇹", code: "LMP", region: "nazionale", profile: "italia_mare", flightBase: 100, hotelBase: 65, lat: 35.5088, lng: 12.61 },
+  { name: "Elba", country: "Toscana", flag: "🇮🇹", code: "EBA", region: "nazionale", profile: "italia_mare", flightBase: 85, hotelBase: 65, lat: 42.8163, lng: 10.3172 },
+  { name: "Forlì", country: "Emilia-Romagna", flag: "🇮🇹", code: "FRL", region: "nazionale", profile: "italia_business", flightBase: 42, hotelBase: 50, lat: 44.2226, lng: 12.0407 },
+
+// --- Altre città famose per i paesi già presenti (almeno 3 per paese) ---
+  { name: "Siviglia", country: "Spagna", flag: "🇪🇸", code: "SVQ", region: "corto raggio", profile: "mediterraneo", flightBase: 65, hotelBase: 50, lat: 37.3891, lng: -5.9845 },
+  { name: "Porto", country: "Portogallo", flag: "🇵🇹", code: "OPO", region: "corto raggio", profile: "mediterraneo", flightBase: 60, hotelBase: 48, lat: 41.1579, lng: -8.6291 },
+  { name: "Faro", country: "Portogallo", flag: "🇵🇹", code: "FAO", region: "corto raggio", profile: "mediterraneo", flightBase: 65, hotelBase: 52, lat: 37.0194, lng: -7.9304 },
+  { name: "Brno", country: "Rep. Ceca", flag: "🇨🇿", code: "BRQ", region: "corto raggio", profile: "centro_europa", flightBase: 42, hotelBase: 38, lat: 49.1951, lng: 16.6068 },
+  { name: "Karlovy Vary", country: "Rep. Ceca", flag: "🇨🇿", code: "KLV", region: "corto raggio", profile: "centro_europa", flightBase: 45, hotelBase: 42, lat: 50.2312, lng: 12.871 },
+  { name: "Santorini", country: "Grecia", flag: "🇬🇷", code: "JTR", region: "corto raggio", profile: "mediterraneo", flightBase: 80, hotelBase: 60, lat: 36.3932, lng: 25.4615 },
+  { name: "Creta (Heraklion)", country: "Grecia", flag: "🇬🇷", code: "HER", region: "corto raggio", profile: "mediterraneo", flightBase: 75, hotelBase: 50, lat: 35.3387, lng: 25.1442 },
+  { name: "Debrecen", country: "Ungheria", flag: "🇭🇺", code: "DEB", region: "corto raggio", profile: "centro_europa", flightBase: 45, hotelBase: 35, lat: 47.4979, lng: 21.6273 },
+  { name: "Balaton", country: "Ungheria", flag: "🇭🇺", code: "SOB", region: "corto raggio", profile: "centro_europa", flightBase: 48, hotelBase: 40, lat: 46.6874, lng: 17.1583 },
+  { name: "Casablanca", country: "Marocco", flag: "🇲🇦", code: "CMN", region: "corto raggio", profile: "mediterraneo", flightBase: 70, hotelBase: 45, lat: 33.5731, lng: -7.5898 },
+  { name: "Fes", country: "Marocco", flag: "🇲🇦", code: "FEZ", region: "corto raggio", profile: "mediterraneo", flightBase: 75, hotelBase: 40, lat: 34.0331, lng: -5.0003 },
+  { name: "Antalya", country: "Turchia", flag: "🇹🇷", code: "AYT", region: "medio raggio", profile: "medio_oriente", flightBase: 90, hotelBase: 32, lat: 36.8969, lng: 30.7133 },
+  { name: "Izmir", country: "Turchia", flag: "🇹🇷", code: "ADB", region: "medio raggio", profile: "medio_oriente", flightBase: 95, hotelBase: 35, lat: 38.4237, lng: 27.1428 },
+  { name: "Sharm el-Sheikh", country: "Egitto", flag: "🇪🇬", code: "SSH", region: "lungo raggio", profile: "medio_oriente", flightBase: 230, hotelBase: 28, lat: 27.9158, lng: 34.33 },
+  { name: "Luxor", country: "Egitto", flag: "🇪🇬", code: "LXR", region: "lungo raggio", profile: "medio_oriente", flightBase: 245, hotelBase: 25, lat: 25.6872, lng: 32.6396 },
+  { name: "Phuket", country: "Thailandia", flag: "🇹🇭", code: "HKT", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 470, hotelBase: 25, lat: 7.8804, lng: 98.3923 },
+  { name: "Chiang Mai", country: "Thailandia", flag: "🇹🇭", code: "CNX", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 460, hotelBase: 20, lat: 18.7883, lng: 98.9853 },
+  { name: "Giacarta", country: "Indonesia", flag: "🇮🇩", code: "CGK", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 530, hotelBase: 25, lat: -6.2088, lng: 106.8456 },
+  { name: "Yogyakarta", country: "Indonesia", flag: "🇮🇩", code: "JOG", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 535, hotelBase: 20, lat: -7.7956, lng: 110.3695 },
+  { name: "Nizza", country: "Francia", flag: "🇫🇷", code: "NCE", region: "corto raggio", profile: "mediterraneo", flightBase: 70, hotelBase: 75, lat: 43.7102, lng: 7.262 },
+  { name: "Lione", country: "Francia", flag: "🇫🇷", code: "LYS", region: "corto raggio", profile: "capitale_business", flightBase: 70, hotelBase: 60, lat: 45.764, lng: 4.8357 },
+  { name: "Edimburgo", country: "Regno Unito", flag: "🇬🇧", code: "EDI", region: "corto raggio", profile: "capitale_business", flightBase: 90, hotelBase: 70, lat: 55.9533, lng: -3.1883 },
+  { name: "Manchester", country: "Regno Unito", flag: "🇬🇧", code: "MAN", region: "corto raggio", profile: "capitale_business", flightBase: 85, hotelBase: 60, lat: 53.4808, lng: -2.2426 },
+  { name: "Monaco di Baviera", country: "Germania", flag: "🇩🇪", code: "MUC", region: "corto raggio", profile: "capitale_business", flightBase: 70, hotelBase: 65, lat: 48.1351, lng: 11.582 },
+  { name: "Amburgo", country: "Germania", flag: "🇩🇪", code: "HAM", region: "corto raggio", profile: "capitale_business", flightBase: 65, hotelBase: 60, lat: 53.5511, lng: 9.9937 },
+  { name: "Rotterdam", country: "Paesi Bassi", flag: "🇳🇱", code: "RTM", region: "corto raggio", profile: "capitale_business", flightBase: 80, hotelBase: 60, lat: 51.9244, lng: 4.4777 },
+  { name: "Eindhoven", country: "Paesi Bassi", flag: "🇳🇱", code: "EIN", region: "corto raggio", profile: "capitale_business", flightBase: 75, hotelBase: 55, lat: 51.4416, lng: 5.4697 },
+  { name: "Salisburgo", country: "Austria", flag: "🇦🇹", code: "SZG", region: "corto raggio", profile: "capitale_business", flightBase: 68, hotelBase: 65, lat: 47.8095, lng: 13.055 },
+  { name: "Innsbruck", country: "Austria", flag: "🇦🇹", code: "INN", region: "corto raggio", profile: "capitale_business", flightBase: 72, hotelBase: 68, lat: 47.2692, lng: 11.4041 },
+  { name: "Cork", country: "Irlanda", flag: "🇮🇪", code: "ORK", region: "corto raggio", profile: "capitale_business", flightBase: 88, hotelBase: 55, lat: 51.8985, lng: -8.4756 },
+  { name: "Shannon", country: "Irlanda", flag: "🇮🇪", code: "SNN", region: "corto raggio", profile: "capitale_business", flightBase: 92, hotelBase: 50, lat: 52.702, lng: -8.9231 },
+  { name: "Aarhus", country: "Danimarca", flag: "🇩🇰", code: "AAR", region: "corto raggio", profile: "nord_europa", flightBase: 95, hotelBase: 70, lat: 56.1629, lng: 10.2039 },
+  { name: "Billund", country: "Danimarca", flag: "🇩🇰", code: "BLL", region: "corto raggio", profile: "nord_europa", flightBase: 90, hotelBase: 65, lat: 55.7403, lng: 9.1518 },
+  { name: "Gothenburg", country: "Svezia", flag: "🇸🇪", code: "GOT", region: "corto raggio", profile: "nord_europa", flightBase: 98, hotelBase: 70, lat: 57.7089, lng: 11.9746 },
+  { name: "Malmö", country: "Svezia", flag: "🇸🇪", code: "MMX", region: "corto raggio", profile: "nord_europa", flightBase: 92, hotelBase: 65, lat: 55.605, lng: 13.0038 },
+  { name: "Ginevra", country: "Svizzera", flag: "🇨🇭", code: "GVA", region: "corto raggio", profile: "capitale_business", flightBase: 88, hotelBase: 85, lat: 46.2044, lng: 6.1432 },
+  { name: "Lugano", country: "Svizzera", flag: "🇨🇭", code: "LUG", region: "corto raggio", profile: "capitale_business", flightBase: 92, hotelBase: 80, lat: 46.0037, lng: 8.9511 },
+  { name: "Anversa", country: "Belgio", flag: "🇧🇪", code: "ANR", region: "corto raggio", profile: "capitale_business", flightBase: 68, hotelBase: 60, lat: 51.2194, lng: 4.4025 },
+  { name: "Liegi", country: "Belgio", flag: "🇧🇪", code: "LGG", region: "corto raggio", profile: "capitale_business", flightBase: 70, hotelBase: 55, lat: 50.6326, lng: 5.5797 },
+  { name: "Cracovia", country: "Polonia", flag: "🇵🇱", code: "KRK", region: "corto raggio", profile: "centro_europa", flightBase: 50, hotelBase: 40, lat: 50.0647, lng: 19.945 },
+  { name: "Danzica", country: "Polonia", flag: "🇵🇱", code: "GDN", region: "corto raggio", profile: "centro_europa", flightBase: 55, hotelBase: 42, lat: 54.352, lng: 18.6466 },
+  { name: "Abu Dhabi", country: "Emirati Arabi", flag: "🇦🇪", code: "AUH", region: "medio raggio", profile: "medio_oriente", flightBase: 275, hotelBase: 65, lat: 24.4539, lng: 54.3773 },
+  { name: "Sharjah", country: "Emirati Arabi", flag: "🇦🇪", code: "SHJ", region: "medio raggio", profile: "medio_oriente", flightBase: 260, hotelBase: 45, lat: 25.3463, lng: 55.4209 },
+  { name: "Eilat", country: "Israele", flag: "🇮🇱", code: "VDA", region: "medio raggio", profile: "medio_oriente", flightBase: 175, hotelBase: 55, lat: 29.5581, lng: 34.9482 },
+  { name: "Haifa", country: "Israele", flag: "🇮🇱", code: "HFA", region: "medio raggio", profile: "medio_oriente", flightBase: 178, hotelBase: 55, lat: 32.794, lng: 34.9896 },
+  { name: "Djerba", country: "Tunisia", flag: "🇹🇳", code: "DJE", region: "corto raggio", profile: "mediterraneo", flightBase: 75, hotelBase: 40, lat: 33.8076, lng: 10.8451 },
+  { name: "Monastir", country: "Tunisia", flag: "🇹🇳", code: "MIR", region: "corto raggio", profile: "mediterraneo", flightBase: 72, hotelBase: 38, lat: 35.762, lng: 10.7818 },
+  { name: "Osaka", country: "Giappone", flag: "🇯🇵", code: "KIX", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 560, hotelBase: 70, lat: 34.6937, lng: 135.5023 },
+  { name: "Sapporo", country: "Giappone", flag: "🇯🇵", code: "CTS", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 570, hotelBase: 65, lat: 43.0618, lng: 141.3545 },
+  { name: "Shanghai", country: "Cina", flag: "🇨🇳", code: "PVG", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 540, hotelBase: 55, lat: 31.2304, lng: 121.4737 },
+  { name: "Busan", country: "Corea del Sud", flag: "🇰🇷", code: "PUS", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 570, hotelBase: 50, lat: 35.1796, lng: 129.0756 },
+  { name: "Jeju", country: "Corea del Sud", flag: "🇰🇷", code: "CJU", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 580, hotelBase: 55, lat: 33.4996, lng: 126.5312 },
+  { name: "Mumbai", country: "India", flag: "🇮🇳", code: "BOM", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 430, hotelBase: 40, lat: 19.076, lng: 72.8777 },
+  { name: "Goa", country: "India", flag: "🇮🇳", code: "GOI", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 440, hotelBase: 30, lat: 15.2993, lng: 74.124 },
+  { name: "Vancouver", country: "Canada", flag: "🇨🇦", code: "YVR", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 460, hotelBase: 95, lat: 49.2827, lng: -123.1207 },
+  { name: "Montreal", country: "Canada", flag: "🇨🇦", code: "YUL", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 410, hotelBase: 85, lat: 45.5019, lng: -73.5674 },
+  { name: "Cancun", country: "Messico", flag: "🇲🇽", code: "CUN", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 540, hotelBase: 60, lat: 21.1619, lng: -86.8515 },
+  { name: "Guadalajara", country: "Messico", flag: "🇲🇽", code: "GDL", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 530, hotelBase: 45, lat: 20.6597, lng: -103.3496 },
+  { name: "San Paolo", country: "Brasile", flag: "🇧🇷", code: "GRU", region: "lungo raggio", profile: "emisfero_sud", flightBase: 610, hotelBase: 50, lat: -23.5505, lng: -46.6333 },
+  { name: "Salvador de Bahia", country: "Brasile", flag: "🇧🇷", code: "SSA", region: "lungo raggio", profile: "emisfero_sud", flightBase: 620, hotelBase: 45, lat: -12.9714, lng: -38.5014 },
+  { name: "Bariloche", country: "Argentina", flag: "🇦🇷", code: "BRC", region: "lungo raggio", profile: "emisfero_sud", flightBase: 660, hotelBase: 50, lat: -41.1335, lng: -71.3103 },
+  { name: "Mendoza", country: "Argentina", flag: "🇦🇷", code: "MDZ", region: "lungo raggio", profile: "emisfero_sud", flightBase: 655, hotelBase: 42, lat: -32.8895, lng: -68.8458 },
+  { name: "Melbourne", country: "Australia", flag: "🇦🇺", code: "MEL", region: "lungo raggio", profile: "emisfero_sud", flightBase: 710, hotelBase: 75, lat: -37.8136, lng: 144.9631 },
+  { name: "Brisbane", country: "Australia", flag: "🇦🇺", code: "BNE", region: "lungo raggio", profile: "emisfero_sud", flightBase: 705, hotelBase: 70, lat: -27.4698, lng: 153.0251 },
+  { name: "Mombasa", country: "Kenya", flag: "🇰🇪", code: "MBA", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 430, hotelBase: 35, lat: -4.0435, lng: 39.6682 },
+  { name: "Malindi", country: "Kenya", flag: "🇰🇪", code: "MYD", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 440, hotelBase: 32, lat: -3.2175, lng: 40.1191 },
+  { name: "Johannesburg", country: "Sudafrica", flag: "🇿🇦", code: "JNB", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 470, hotelBase: 50, lat: -26.2041, lng: 28.0473 },
+  { name: "Durban", country: "Sudafrica", flag: "🇿🇦", code: "DUR", region: "lungo raggio", profile: "lungo_raggio_generico", flightBase: 475, hotelBase: 45, lat: -29.8587, lng: 31.0218 },
 ];
+
+const SEASONALITY_PROFILES = {
+  "mediterraneo": { flightMult: [0.85, 0.85, 0.9, 1.05, 1.15, 1.2, 1.4, 1.45, 1.15, 0.95, 0.8, 1.05], hotelMult: [0.8, 0.8, 0.85, 0.95, 1.05, 1.15, 1.35, 1.4, 1.1, 0.95, 0.8, 0.95] },
+  "capitale_business": { flightMult: [0.9, 0.85, 0.9, 1.0, 1.1, 1.15, 1.35, 1.4, 1.15, 1.0, 0.85, 1.05], hotelMult: [0.85, 0.8, 0.85, 0.95, 1.05, 1.15, 1.3, 1.35, 1.1, 0.95, 0.85, 1.0] },
+  "centro_europa": { flightMult: [0.85, 0.85, 0.9, 1.0, 1.05, 1.12, 1.22, 1.22, 1.08, 0.95, 0.83, 1.08], hotelMult: [0.8, 0.8, 0.85, 0.95, 1.0, 1.08, 1.18, 1.18, 1.03, 0.9, 0.8, 0.98] },
+  "nord_europa": { flightMult: [0.85, 0.85, 0.9, 1.0, 1.1, 1.2, 1.3, 1.3, 1.1, 0.95, 0.85, 1.15], hotelMult: [0.85, 0.85, 0.9, 0.95, 1.05, 1.15, 1.25, 1.25, 1.05, 0.95, 0.85, 1.1] },
+  "medio_oriente": { flightMult: [0.85, 0.85, 0.9, 1.0, 1.05, 1.15, 1.25, 1.3, 1.1, 1.0, 0.85, 0.95], hotelMult: [0.8, 0.8, 0.85, 0.9, 0.95, 1.05, 1.15, 1.2, 1.05, 0.95, 0.85, 0.9] },
+  "lungo_raggio_generico": { flightMult: [0.9, 0.9, 0.95, 1.0, 1.05, 1.15, 1.25, 1.25, 1.1, 1.0, 0.9, 1.3], hotelMult: [0.85, 0.85, 0.9, 0.95, 1.0, 1.05, 1.15, 1.15, 1.05, 0.95, 0.9, 1.2] },
+  "emisfero_sud": { flightMult: [1.2, 1.15, 1.0, 0.9, 0.85, 0.85, 0.95, 0.95, 0.9, 0.9, 1.0, 1.3], hotelMult: [1.1, 1.05, 0.95, 0.9, 0.85, 0.85, 0.9, 0.9, 0.9, 0.9, 0.95, 1.2] },
+  "italia_arte": { flightMult: [0.85, 0.85, 0.9, 1.1, 1.05, 1.15, 1.3, 1.35, 1.1, 0.95, 0.85, 1.15], hotelMult: [0.8, 0.8, 0.85, 1.05, 1.0, 1.1, 1.3, 1.35, 1.05, 0.9, 0.8, 1.1] },
+  "italia_business": { flightMult: [0.85, 0.85, 0.9, 1.0, 1.0, 1.05, 1.05, 0.9, 1.05, 1.0, 0.9, 1.1], hotelMult: [0.85, 0.85, 0.9, 0.95, 1.0, 1.0, 0.95, 0.85, 1.0, 0.95, 0.9, 1.05] },
+  "italia_mare": { flightMult: [0.8, 0.8, 0.85, 0.95, 1.0, 1.2, 1.5, 1.6, 1.15, 0.9, 0.8, 0.95], hotelMult: [0.75, 0.75, 0.8, 0.9, 0.95, 1.2, 1.55, 1.65, 1.15, 0.85, 0.75, 0.9] },
+};
+
+const COORDS_BY_CODE = {
+  "BCN": [41.3851, 2.1734],
+  "LIS": [38.7223, -9.1393],
+  "PRG": [50.0755, 14.4378],
+  "ATH": [37.9838, 23.7275],
+  "BUD": [47.4979, 19.0402],
+  "RAK": [31.6295, -7.9811],
+  "IST": [41.0082, 28.9784],
+  "CAI": [30.0444, 31.2357],
+  "JFK": [40.7128, -74.006],
+  "BKK": [13.7563, 100.5018],
+  "DPS": [-8.3405, 115.092],
+  "MAD": [40.4168, -3.7038],
+  "CDG": [48.8566, 2.3522],
+  "LON": [51.5074, -0.1278],
+  "BER": [52.52, 13.405],
+  "AMS": [52.3676, 4.9041],
+  "VIE": [48.2082, 16.3738],
+  "DUB": [53.3498, -6.2603],
+  "CPH": [55.6761, 12.5683],
+  "ARN": [59.3293, 18.0686],
+  "ZRH": [47.3769, 8.5417],
+  "BRU": [50.8503, 4.3517],
+  "WAW": [52.2297, 21.0122],
+  "MLA": [35.8989, 14.5146],
+  "DXB": [25.2048, 55.2708],
+  "TLV": [32.0853, 34.7818],
+  "TUN": [36.8065, 10.1815],
+  "HND": [35.6762, 139.6503],
+  "SIN": [1.3521, 103.8198],
+  "HKG": [22.3193, 114.1694],
+  "ICN": [37.5665, 126.978],
+  "PEK": [39.9042, 116.4074],
+  "DEL": [28.6139, 77.209],
+  "LAX": [34.0522, -118.2437],
+  "MIA": [25.7617, -80.1918],
+  "YYZ": [43.6532, -79.3832],
+  "MEX": [19.4326, -99.1332],
+  "GIG": [-22.9068, -43.1729],
+  "EZE": [-34.6037, -58.3816],
+  "SYD": [-33.8688, 151.2093],
+  "NBO": [-1.2921, 36.8219],
+  "CPT": [-33.9249, 18.4241],
+};
 
 const CONTINENT_BY_COUNTRY = {
   "Spagna": "Europa", "Portogallo": "Europa", "Rep. Ceca": "Europa", "Grecia": "Europa",
@@ -158,10 +323,17 @@ const CONTINENT_BY_COUNTRY = {
   "USA": "Nord America", "Canada": "Nord America", "Messico": "Nord America",
   "Brasile": "Sud America", "Argentina": "Sud America",
   "Australia": "Oceania",
+  "Abruzzo": "Italia", "Calabria": "Italia", "Campania": "Italia", "Emilia-Romagna": "Italia", "Friuli-Venezia Giulia": "Italia", "Lazio": "Italia", "Liguria": "Italia", "Lombardia": "Italia", "Marche": "Italia", "Piemonte": "Italia", "Puglia": "Italia", "Sardegna": "Italia", "Sicilia": "Italia", "Toscana": "Italia", "Umbria": "Italia", "Veneto": "Italia",
 };
-const CONTINENT_FLAG = { "Europa": "🌍", "Africa": "🌍", "Asia": "🌏", "Nord America": "🌎", "Sud America": "🌎", "Oceania": "🌏" };
+const CONTINENT_FLAG = { "Europa": "🌍", "Africa": "🌍", "Asia": "🌏", "Nord America": "🌎", "Sud America": "🌎", "Oceania": "🌏", "Italia": "🇮🇹" };
 
-DESTINATIONS.forEach((d) => { d.continent = CONTINENT_BY_COUNTRY[d.country] || "Altro"; });
+DESTINATIONS.forEach((d) => {
+  d.continent = CONTINENT_BY_COUNTRY[d.country] || "Altro";
+  if (d.lat == null && COORDS_BY_CODE[d.code]) {
+    d.lat = COORDS_BY_CODE[d.code][0];
+    d.lng = COORDS_BY_CODE[d.code][1];
+  }
+});
 
 const DEPARTURE_CITIES_RAW = [
   { name: "Roma", code: "FCO" },
@@ -218,9 +390,14 @@ function hashIndex(str, mod) {
 }
 
 function computeForMonth(dest, monthIdx, nights, people) {
-  const flightPerPerson = Math.round(dest.flightBase * dest.flightMult[monthIdx]);
+  // Le destinazioni "storiche" hanno i loro array flightMult/hotelMult scritti a mano;
+  // quelle nuove indicano solo un "profile" e riusano gli array condivisi qui sotto.
+  const profile = dest.profile ? SEASONALITY_PROFILES[dest.profile] : null;
+  const flightMult = dest.flightMult || profile.flightMult;
+  const hotelMult = dest.hotelMult || profile.hotelMult;
+  const flightPerPerson = Math.round(dest.flightBase * flightMult[monthIdx]);
   const flight = flightPerPerson * people;
-  const hotelNight = Math.round(dest.hotelBase * dest.hotelMult[monthIdx]);
+  const hotelNight = Math.round(dest.hotelBase * hotelMult[monthIdx]);
   const hotel = hotelNight * nights;
   return { flight, flightPerPerson, hotelNight, hotel, total: flight + hotel };
 }
